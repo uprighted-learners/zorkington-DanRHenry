@@ -6,9 +6,7 @@ function ask(questionText) {
     readlineInterface.question(questionText, resolve);
   });
 }
-// Global Variables
-let item = [];
-let itemToTake;
+
 // Text Decoration Codes
 let bold = "\u001b[1m"
 // Font Colors
@@ -51,9 +49,22 @@ let bold = "\u001b[1m"
   // n=1 clears from cursor to start of line
   // n=2 clears entire line
 
-const welcomeMessage = `Welcome to the\n${brightYellow}UprightEd ${brightGreen}Zorkington${reset}${white} ${brightYellow}Project${reset}${white}!\nBefore we get started...\nPlease enter your ${brightYellow}name?${reset}${white}\n`
-
+//!---------------------------------- Global Variables -------------------------------//
 let nameInput;
+let input = [];
+let item = [];
+let itemToTake;
+let z = 0;
+let x = 9;
+let y = 9;
+let playerLocation = [z, x, y];
+let cL = [];
+let i = 0;
+let inventory = ["key"];
+let locationArray = []; // This will store all constructed location objects
+
+// Intro Welcome Message
+const welcomeMessage = `Welcome to the\n${brightYellow}UprightEd ${brightGreen}Zorkington${reset}${white} ${brightYellow}Project${reset}${white}!\nBefore we get started...\nPlease enter your ${brightYellow}name?${reset}${white}\n`
 
 async function askName() {
   if (nameInput == undefined) {
@@ -62,24 +73,26 @@ async function askName() {
   }
 }
 
-let z = 0;
-let x = 9;
-let y = 9;
-let playerLocation = [z, x, y];
-let cL;
-let i = 0;
-// let itemToUse;
+//!------------------ Commands to be included in the help function: ----------------------
 let commands = `\nTo ${brightGreen}move:${reset}, type ${brightYellow}go${reset}, ${brightYellow}"walk"${reset}, or ${brightYellow}"move"${reset}\nYou can also use ${brightYellow}move north${reset}, etc.\nTo return home, ask to "warp"\nLook around using "look".`
-let inventory = [];
 
-// Search function for finding the playerLocation coordinates in the locationArray(object)
-
+//!Search function for finding the playerLocation coordinates in the locationArray(object)
 function search() {
   // Search the locationArray coordinate until the coordinate of the playerLocation is found, then return the index
+
+  
   for (let i; i < locationArray.length && JSON.stringify(locationArray[i].coordinate) != JSON.stringify(playerLocation); i++)
-  return i;
+  if ( i != undefined) {
+    console.log("defined i:",i)
+    return i;
+  } else { 
+    console.log("undefined i:",i)
+    return undefined
+  }
 }
-//Location Class Constructor
+
+
+//!-------------------------------Location Class Constructor------------------------------
 class Location {
   constructor(coordinate, name, description, north, east, south, west, up, down, item, lock, funct) {
         this.coordinate = coordinate; // Location on map
@@ -88,27 +101,23 @@ class Location {
         this.east = east;
         this.south = south;
         this.west = west;
-        this.up = up;// Default directions to closed?
-        this.down = down;// Default directions to closed?
+        this.up = up;// Default direction to closed
+        this.down = down;// Default direction to closed
         this.name = name; // quick name of location
         this.item = item;
-        // this.item2 = item2;
-        // this.item3 = item3;
         this.lock = lock; // holds a string that matches a key used to unlock it
         this.funct = funct;
   }
 }
 
-// This will store all constructed location objects
-let locationArray = [];
-
+//!-------------------------- Standard Location Creation Function ------------------------
 // createLocation function to construct each location and push them to the locationArray
 function createLocation(newLocation, coordinate, name, description, north, east, south, west, up, down, item, lock, funct) {
   newLocation = new Location(coordinate, name, description, north, east, south, west, up, down, item, lock, funct);
 return locationArray.push(newLocation)
 }
 
-/* Locations indices
+/*//!-------------------------------- Locations indices-----------------------------------
   0 = newLocation variable
   1 = coordinate
   2 = name
@@ -124,6 +133,7 @@ return locationArray.push(newLocation)
   12 = funct
  */
 
+//!------------------------ Locations to Populate locationArray---------------------------
 // Create Start Location
 createLocation(
   "start", // 0 newLocation
@@ -139,7 +149,7 @@ createLocation(
   [`keycard`, `crayon`, `index`, `football`], //10 Item
   "keycard", //11 Lock
   undefined, //12 Function
-  );
+);
 
 // Create Hallway
 createLocation(
@@ -155,9 +165,9 @@ createLocation(
   undefined, //9 down
   [], //10 item
   undefined, //11 lock
-  );
+);
 
-  // Create topOfStairway
+// Create topOfStairway
 createLocation(
   "stairwell", //0
   [0,8,11],//1
@@ -200,7 +210,7 @@ createLocation(
     undefined, //8 up
     undefined, //9 down
     [], //10 item
-    );
+);
 
 // Create Kate's Office
 createLocation(
@@ -215,7 +225,7 @@ createLocation(
   undefined,//8 up
   undefined,//9 down
   [],//10 item
-  );
+);
 
 // Create End of Hall
 createLocation(
@@ -245,107 +255,130 @@ createLocation(
   "open",//8 up
   undefined,//9 down
   ["tissue"],//10 item
-  );
+);
 
 begin();
 
-
-// Display opening message and call the start function
+//!--------------- Display opening message and call the start function -----------------
 async function begin() {
   await askName();
   console.log(`\nHi, ${brightYellow}${nameInput}${reset}!\nWe are happy that you have come to take a tour of our ${brightGreen}Zorkington${reset} project!\nYou're at the entrance to the ${brightYellow}PTSB January Cohort${reset}.\nYou see a ${brightGreen}magnetic stripe reader${reset}.`)
-  
+  //! ------------ Push directional data from starting location into the CL array -------
+  cL.push(locationArray[0].north);
+  cL.push(locationArray[0].east);
+  cL.push(locationArray[0].south);
+  cL.push(locationArray[0].west);
+  cL.push(locationArray[0].up);
+  cL.push(locationArray[0].down);
+
   start()}
 
-
 async function start() {
-
 // Get input, split it into an array, search the array for keywords, call functions based on those keywords.
-
-  let input = [];
 
   let response = await ask(`\nWhat would you like to do?\n`);
 
-  input.push(response);
   input = response.split(" ");
 
-  // Added after turning in. Changes input text to lowercase
+//!--------------------- Sanitize input (lowercase, remove: the)-------------------------
   input = input.map(item => item.toLowerCase()); 
+  if (input.includes("the")) {
+    input.splice(input.indexOf("the"), 1)
+  }
 
-// Search input for keywords
+//!------------------------------ Search input for keywords ------------------------------
 
-// Help command (finish this later):
-  if (input.includes("help")) {
-    console.log("\nThis is unfinished\n",commands)
-    start()}
+//----------------------------- Help Command (finish this later):-------------------------
+if (input.includes("help")) {
+  console.log("\nThis is unfinished\n",commands)
+  start()}
 
-// Display the array of location objects for debugging
+//------------------------------ Display Current Location Array --------------------------
+else if (input.includes("cl")) {
+  console.log("cL")
+  cLFunction()
+}
+
+//------------------------------- Populate the Current Location --------------------------
+//---------------------- Use if there is no location for the coordinates -----------------
+else if (input.includes("popcl")) {
+  popCL()
+  start()
+}
+
+//-------------------- Display the array of location objects for debugging ---------------
   else if (input.includes("location")) {
     console.log(playerLocation,"\n",locationArray);
     start()}
 
-// Look command:
+//------------------------------------- Look command: ------------------------------------
   else if (input.includes("look") || input.includes("search")) {
     describe();}
 
-// Where am I?:
+//-------------------------------------- Where am I? -------------------------------------
+//--Display Location coordinate (locationArray[i].coordinate), and Current Location (cL)--
+
   else if (input.includes("where")) {
     whereAmI();
   }
   
-// Move north:
+//-------------------------------------- Move north: -------------------------------------
   else if (input.includes("go") && input.includes("north")|| input.includes("move") && input.includes("north") || input.includes("walk") && input.includes("north")|| input.includes("go") && input.includes("forward")|| input.includes("move") && input.includes("forward") || input.includes("walk") && input.includes("forward")) {
     go("north") 
   } 
 
-// Move south:
+//--------------------------------------- Move south: ------------------------------------
   else if (input.includes("go") && input.includes("south")|| input.includes("move") && input.includes("south") || input.includes("walk") && input.includes("south") || input.includes("go") && input.includes("backward")|| input.includes("move") && input.includes("backward") || input.includes("walk") && input.includes("backward")) {
   go("south") 
 
 } 
 
-// Move east:
+//--------------------------------------- Move east: -------------------------------------
   // Search input for keywords go, move, walk, south
   else if (input.includes("go") && input.includes("east")|| input.includes("move") && input.includes("east") || input.includes("walk") && input.includes("east")|| input.includes("go") && input.includes("right")|| input.includes("move") && input.includes("right") || input.includes("walk") && input.includes("right")) {
     go("east") 
   }
 
-// Move west:
+// -------------------------------------- Move west: -------------------------------------
   // Search input for keywords go, move, walk, south
   else if (input.includes("go") && input.includes("west")|| input.includes("move") && input.includes("west") || input.includes("walk") && input.includes("west")|| input.includes("go") && input.includes("left")|| input.includes("move") && input.includes("left") || input.includes("walk") && input.includes("left")) {
     go("west") 
 
   }
 
-// Move up:
+// --------------------------------------- Move up: --------------------------------------
   // Search input for keywords go, move, walk, south
   else if (input.includes("go") && input.includes("up")|| input.includes("move") && input.includes("up") || input.includes("walk") && input.includes("up")) {
     go("up") 
   }
 
-// Move down:
+// -------------------------------------- Move down: -------------------------------------
   // Search input for keywords go, move, walk, south
   else if (input.includes("go") && input.includes("down")|| input.includes("move") && input.includes("down") || input.includes("walk") && input.includes("down")) {
   go("down")}
 
-// Move without a direction requested:
+// ------------------------- Move Without a Direction Specified: -------------------------
 // Search input for keywords go, move, walk
   else if (input.includes("go" || input.includes("move") || input.includes("walk"))) {
   let moveDirection = await ask("Which direction would you like to move?\n")
-  go(moveDirection);
+    if (moveDirection == "up" || moveDirection == "down" || moveDirection == "north" || moveDirection == "east" || moveDirection == "south" || moveDirection == "west" ||moveDirection == "left" || moveDirection == "right" || moveDirection == "forward" || moveDirection == "backward") {
+      go(moveDirection);
+    } else {
+      console.log("You can't move in that direction")
+    }
   }
 
-// Warp to start:
+// ------------------------------------ Warp to start: -----------------------------------
   else if (input.includes("please")|| input.includes("abracadabra") || input.includes("hocus")) {
   warp();
   }
 
-// Exit game:
+// -------------------------------------- Exit game: -------------------------------------
   else if (input.includes("quit") || input.includes("exit")) {
   exitGame();
   }
 
-// Take/pick up items:
+// --------------------------------- Take/pick up items: ---------------------------------
 /* 
 Check to see if an item exists in the current location
 If it does, add it to the inventory and remove it from the current location object.
@@ -365,13 +398,13 @@ If it does, add it to the inventory and remove it from the current location obje
     }
   }
 
-// Drop Item:
+// ------------------------------------- Drop Item: --------------------------------------
 // Use the splice command to remove the dropped item from the inventory
   else if (input.includes("drop") || input.includes("leave")) {
     let itemToDrop;
     if (input.includes("drop")) {
       itemToDrop = input[input.indexOf("drop")+1]
-      drop (itemToDrop)
+      drop (itemToDrop);
 
     } else if (input.includes("leave")) {
       let itemToDrop = input[input.indexOf("leave")+1] // Takes the next word in the input index to use as an item argument
@@ -384,7 +417,7 @@ If it does, add it to the inventory and remove it from the current location obje
   else if (input.includes("unlock")|| input.includes("swipe")) {
   unlock()}
 
-// View Inventory:
+//------------------------------------ View Inventory: -----------------------------------
   else if (input.includes("inventory") || input.includes("items") || input.includes("i")) {
     if (inventory.length == 0) {
       console.log(`You have nothing in your inventory`)
@@ -395,7 +428,7 @@ If it does, add it to the inventory and remove it from the current location obje
     }
   } 
 
-// Exit the game
+// ------------------------------------ Exit the game ------------------------------------
   else if (input.includes("exit" || input.includes("quit"))) {
     let quitQuestion = await ask(`Are you sure want to quit the game?`)
       if (quitQuestion == "y" || quitQuestion == "yes") {
@@ -405,7 +438,7 @@ If it does, add it to the inventory and remove it from the current location obje
     }
   }
 
-// Open the door
+// ------------------------------------ Open the door ------------------------------------
   else if (locationArray[i].funct && input.includes("open")) {
     locationArray[i].funct()
     start()}
@@ -414,7 +447,7 @@ If it does, add it to the inventory and remove it from the current location obje
     start()
   }
 
-// Command not recognized:
+// ------------------------------- Command not recognized: -------------------------------
   else {
   console.log(`\nI don't understand what you're saying.\n`)
   start()
@@ -422,8 +455,33 @@ If it does, add it to the inventory and remove it from the current location obje
 
 //! Functions Section:
 
-// Take Items function:
-  async function take(itemToTake) {
+// ------------------- Creating a new location if none is present. -----------------------
+function onTheFlyLocation() {
+  if (!playerLocation[i])
+  console.log("about to create a new playerLocation",playerLocation)
+  let newLocation = (`_${playerLocation}`)
+  createLocation(newLocation, playerLocation, undefined, "nothing special about this area",undefined,undefined,undefined,undefined,undefined,undefined, [])
+}
+
+function popCL(){
+  if (cL.length == 0) {
+  // Check if there is location data at the index found
+    if (locationArray[i]) {
+      // If found, push directions at the current index to the cL array.
+      cL.push(locationArray[i].north);
+      cL.push(locationArray[i].east);
+      cL.push(locationArray[i].south);
+      cL.push(locationArray[i].west);
+      cL.push(locationArray[i].up);
+      cL.push(locationArray[i].down);
+      }
+  } else {
+    // create a new location and populate the cl
+  }
+};
+
+// -------------------------------- Take Items function: ---------------------------------
+async function take(itemToTake) {
     search()
 // If there is no current location object in the locationArray, or if the location item array is 0 length, say there's nothing to pick up.
     if (locationArray[i] == undefined || locationArray[i].item.length == 0) {
@@ -464,27 +522,16 @@ If it does, add it to the inventory and remove it from the current location obje
         }
       }
     }
-  }
+}
 
-  async function drop(item) {
-    search()
-// If the user tries to drop something that is not in the inventory, tell them they can't drop it.
-    if (!inventory.includes(item)) {
-      console.log(`You can't drop what you don't have.`) 
-      start();}
-
-// If there is no object in the locationArray for the current location, create a new object, push it to the locationArray, splice the item from the inventory, and say there is nothing special about the area.
-    if (locationArray[i] == undefined){
-      let newLocation = (`_${playerLocation}`)
-      createLocation(newLocation, playerLocation, undefined, "nothing special about this area",undefined,undefined,undefined,undefined,undefined,undefined)
-      // locationArray[locationArray.length-1].item = item
-      locationArray[locationArray.length-1].item = item; //! Could this be pushed instead?
-      inventory.splice([inventory.indexOf(item)], 1);
-      start();}
-    else {let dropItemQuestion = await ask(`Are you sure you want to drop ${item}?\n`);
+// ---------------------------- Confirm Drop Items Function ------------------------------
+async function dropYN (item) {
+  console.log("dropsielocation:",locationArray[i])
+  let dropItemQuestion = await ask(`Are you sure you want to drop the ${yellow}${item}${reset}?\n`);
       if (dropItemQuestion == "y" || dropItemQuestion == "yes") {
 // If the answer is yes, push the item to the locationArray item array, and splice it from the inventory
           let currentLocation = locationArray[i];
+          console.log("Current Location:",currentLocation)
           currentLocation.item.push(item);
           inventory.splice([inventory.indexOf(item)], 1)
           start()
@@ -493,34 +540,41 @@ If it does, add it to the inventory and remove it from the current location obje
 // If the answer is no, go to the start again.        
         start();
       }
+}
+
+// --------------------------------- Drop Items Function ---------------------------------
+async function drop(item) {
+    search()
+
+// -------------------------------- Drop Inventory Check ---------------------------------
+// If the user tries to drop something that is not in the inventory, tell them they can't drop it.
+    if (!inventory.includes(item)) {
+      console.log(`You can't drop what you don't have.`) 
+      start();}
+
+// If there is no object in the locationArray for the current location, create a new object, push it to the locationArray, splice the item from the inventory, and say there is nothing special about the area.
+// console.log(locationArray[i]);
+
+    else {
+      dropYN(item)
     }
-  }
+        start();
+}
 
-  async function go(text) {
-  // create a variable to hold current location's directional information.
-  cL = [];
-
-// Check if there is location data at the index found
-  if (locationArray[i]) {
-
-// If found, push directions at the current index to the cL array.
-    cL.push(locationArray[i].north); // index 4
-    cL.push(locationArray[i].east); // index 5
-    cL.push(locationArray[i].south); // index 6
-    cL.push(locationArray[i].west); // index 7
-    cL.push(locationArray[i].up); // index 8
-    cL.push(locationArray[i].down); // index 9
-    }
-
-// If the text is "blocked", do not move, but display a message.
+// ---------------------------------- Movement Function ----------------------------------
+async function go(text) {
+    search() /* Search for the index of the current location in the locations array
+    */
+    // If the text is "blocked", do not move, but display a message.
     if (text == "north" || text == "forward") {
       if (cL[0] == 'blocked') {
-        console.log("The way is blocked.")
+        console.log(`\nThe way is ${red}blocked.${reset}\n`)
         // playerLocation = locationArray[i].coordinate;
       } else {
       console.log(`You move ${text}`);
       y++
-      playerLocation = [z, x, y];
+      playerLocation = [z, x, y];   
+      popCL();
       // console.log(locationArray[i])
     }
   } else if (text == "east" || text == "right") {
@@ -531,6 +585,7 @@ If it does, add it to the inventory and remove it from the current location obje
     console.log(`You move ${text}`);
     x++
     playerLocation = [z, x, y];
+    popCL();
     i = locationArray.indexOf(playerLocation)
     }
 
@@ -542,7 +597,13 @@ If it does, add it to the inventory and remove it from the current location obje
     console.log(`You move ${text}`);
     y--
     playerLocation = [z, x, y];
+    popCL();
     i = locationArray.indexOf(playerLocation)
+    // console.log("locationarrays length before creating one on the fly",locationArray.length)
+    onTheFlyLocation()
+    // console.log("locationarrays length after creating one on the fly",locationArray.length)
+    // console.log("locationarrays after creating one on the fly",locationArray)
+    cLFunction()
     }
 
   } else if (text == "west" || text == "left") {
@@ -553,6 +614,7 @@ If it does, add it to the inventory and remove it from the current location obje
     console.log(`You move ${text}`);
     x--
     playerLocation = [z, x, y];
+    popCL();
     i = locationArray.indexOf(playerLocation)
     }
 
@@ -564,6 +626,7 @@ If it does, add it to the inventory and remove it from the current location obje
     console.log(`You move ${text}`);
     z++
     playerLocation = [z, x, y];
+    popCL();
     i = locationArray.indexOf(playerLocation)
     }
 
@@ -576,6 +639,7 @@ If it does, add it to the inventory and remove it from the current location obje
     z--
     // console.log(z, x, y)
     playerLocation = [z, x, y];
+    popCL();
     i = locationArray.indexOf(playerLocation)
     }
 
@@ -585,111 +649,127 @@ If it does, add it to the inventory and remove it from the current location obje
     playerLocation = locationArray[i].coordinate;
 console.log("locationArray[i].coordinate:",locationArray[i].coordinate)
 
-  } else {
-    [z, x, y] = [0, 9, 9];
-    playerLocation = [z, x, y];
-    console.log(`You have ${green}warped${reset} to safety. ${yellow}Congratulations${reset}, ${blue}${nameInput}${reset}, on escaping!`);
-  }
-};
-  describe()
-  }
+    } else {
+      [z, x, y] = [0, 9, 9];
+      playerLocation = [z, x, y];
+      popCL();
+      console.log(`You have ${green}warped${reset} to safety. ${yellow}Congratulations${reset}, ${blue}${nameInput}${reset}, on escaping!`);
+    }
+  };
+describe()
+}
 
-// Looking around
-  function describe() 
-  {
-    search()
-      // Search the locationArray for the existence of the current location at the search index
-      // If there is no object at the index:
-      if (!locationArray[i]){
-          console.log(`You don't see anything interesting...`); 
-          start();
+// ----------------------------------- Looking around ------------------------------------
+function describe() 
+{
+  search()
+    // Search the locationArray for the existence of the current location at the search index
+    // If there is no object at the index:
+    if (!locationArray[i]){
+        console.log(`You don't see anything interesting...`); 
+        start();
 
-      // If the coordinate has been discovered in the locationArray, display the description.
-      } else if (locationArray[i].item.length > 0 && locationArray[i].description) {
-        let items = [];
-          for (let c = 0; c < locationArray[i].item.length; c++) {
-            items.push(`${yellow}`+locationArray[i].item[c]+`${reset},`)
-            }
-          word = items[(items.length-1)];
-          word = word.slice(0,-1);
-          let itemList = "";
-          if (items.length > 1) {
-            items[(items.length-1)] = (`${reset}and a ${yellow}`+word);
-            for (item of items) {
-              itemList += item,
-              itemList += " "}
-            itemList = (itemList.slice(0,-1)+`${reset}.`);
-          } else {
-            itemList = items[0];
-            itemList = (itemList.slice(0,-1)+`${reset}.`);
+    // If the coordinate has been discovered in the locationArray, display the description.
+    } else if (locationArray[i].item.length > 0 && locationArray[i].description) {
+      let items = [];
+        for (let c = 0; c < locationArray[i].item.length; c++) {
+          items.push(`${yellow}`+locationArray[i].item[c]+`${reset},`)
           }
-          console.log(`You look around and see ${locationArray[i].description}.\nYou also see a ${yellow}${itemList}${reset}`);
-            start();
-
-      } else if (locationArray[i].description) {
-          console.log(`You look around and see ${locationArray[i].description}`);
+        word = items[(items.length-1)];
+        word = word.slice(0,-1);
+        let itemList = "";
+        if (items.length > 1) {
+          items[(items.length-1)] = (`${reset}and a ${yellow}`+word);
+          for (item of items) {
+            itemList += item,
+            itemList += " "}
+          itemList = (itemList.slice(0,-1)+`${reset}.`);
+        } else {
+          itemList = items[0];
+          itemList = (itemList.slice(0,-1)+`${reset}.`);
+        }
+        console.log(`You look around and see ${locationArray[i].description}.\nYou also see a ${yellow}${itemList}${reset}`);
           start();
-      }
-    }
 
-// Unlocking doors function:
-  function unlock(){
-  if (!locationArray[i]){
-    console.log("There's nothing to unlock.")
-    start();
-  
- // If the coordinate has been discovered in the locationArray, display the description.
-  } else if (locationArray[i].lock == undefined) {
-    console.log("There's nothing to unlock.")
+    } else if (locationArray[i].description) {
+        console.log(`You look around and see ${locationArray[i].description}`);
+        start();
+    }
+}
+
+// ----------------------------- Unlocking doors function: -------------------------------
+function unlock(){
+if (!locationArray[i]){
+  console.log("There's nothing to unlock.")
+  start();
+
+// If the coordinate has been discovered in the locationArray, display the description.
+} else if (locationArray[i].lock == undefined) {
+  console.log("There's nothing to unlock.")
 // If the way is blocked in any of the nesw directions, if the inventory contains an item with the same name as the lock, delete from the inventory and change the value of the lock to undefined
-  } else if (inventory.includes(locationArray[i].lock)) {
-      if (locationArray[i].north == "blocked") {
-        locationArray[i].north = undefined
-      } else if (locationArray[i].east == "blocked") {
-        locationArray[i].east = undefined
-      } else if (locationArray[i].south == "blocked") {
-        locationArray[i].south = undefined
-      } else if (locationArray[i].west == "blocked") {
-        locationArray[i].west = undefined
-    }
-    console.log(`You hear a mechanism ${blue}click${reset}.`)
-    inventory.splice(inventory.indexOf(locationArray[i].lock), 1)
-    locationArray[i].lock = undefined
-    start()
+} else if (inventory.includes(locationArray[i].lock)) {
+    if (locationArray[i].north == "blocked") {
+      locationArray[i].north = undefined
+    } else if (locationArray[i].east == "blocked") {
+      locationArray[i].east = undefined
+    } else if (locationArray[i].south == "blocked") {
+      locationArray[i].south = undefined
+    } else if (locationArray[i].west == "blocked") {
+      locationArray[i].west = undefined
   }
-  }
+  console.log(`You hear a mechanism ${blue}click${reset}.`)
+  inventory.splice(inventory.indexOf(locationArray[i].lock), 1)
+  locationArray[i].lock = undefined;
+  cL[cL.indexOf("blocked")] = undefined;
+  start()
+}
+}
 
-// Warp Home function:
-  async function warp(){
-  let warpQuestion = await ask("Would you like to warp home?") 
-  if (warpQuestion == "y" || warpQuestion == "yes") {
-    go("warp");
-    } else {
-      start() 
-    }
+// -------------------------------- Warp Home function: ----------------------------------
+async function warp(){
+let warpQuestion = await ask("Would you like to warp home?") 
+if (warpQuestion == "y" || warpQuestion == "yes") {
+  go("warp");
+  } else {
+    start() 
   }
-  
-// Exit Game function
-  async function exitGame() {
-    let exitQuestion = await ask ("Are you sure you want to exit the game?\n")
-    if (exitQuestion == "y" || exitQuestion == "yes") {
-      process.exit();
-    } else {
-      start();
-    }
-  }
+}
 
-//! Debugging commands Section
-
-// Display information about current location
-  function whereAmI(){
-    i = locationArray.indexOf(playerLocation)
-    console.log("playerLocation:",playerLocation)
-    if (locationArray[i]) {
-      console.log("locationArray[i].coordinate:",locationArray[i].coordinate)
-      console.log("cL:",cL);
-    }
+// --------------------------------- Exit Game function ----------------------------------
+async function exitGame() {
+  let exitQuestion = await ask ("Are you sure you want to exit the game?\n")
+  if (exitQuestion == "y" || exitQuestion == "yes") {
+    process.exit();
+  } else {
     start();
   }
 }
 
+//! ---------------------------- Debugging commands Section ------------------------------
+
+// -------------------- Display information about current location -----------------------
+function whereAmI(){
+  let i = locationArray.indexOf(playerLocation)
+  console.log("playerLocation:",playerLocation)
+  if (locationArray[i]) {
+    console.log("locationArray[i].coordinate:",locationArray[i].coordinate)
+    console.log("cL:",cL);
+  }else {
+    console.log("else...")
+    // console.log("locationArray[i].coordinate:",locationArray[i].coordinate)
+    console.log("cL:",cL);
+  }
+  start();
+}
+
+// ------------------- Display Current Location Directional Information ------------------
+function cLFunction() {
+console.log(red,"cL Array:",reset,cL)
+if (locationArray[i]) {
+  console.log(locationArray[i])
+} else {
+  console.log(`there is no information at locationArray, index ${i}`)
+}
+start()
+}
+}
