@@ -725,8 +725,9 @@ function describe()
           itemList = items[0];
           itemList = (itemList.slice(0,-1)+`${reset}.`);
         }
-        // let description = (`You look around and see ${locationArray[i].description}.`)
-        let description = "";
+        let description = (`You look around and see ${locationArray[i].description}.`)
+// Progress toward line character limit of 80
+        /*         let description = "";
         
           for (let i = 0; i < 361; i++) {
             description += i
@@ -750,7 +751,7 @@ function describe()
                 }
                 console.log(tempArray)
                 console.log(tempArray.length)
-            // description =
+            // description = */
         console.log(`You look around and see ${locationArray[i].description}.\nYou also see a ${yellow}${itemList}${reset}`);
           start();
 
