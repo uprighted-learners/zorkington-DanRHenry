@@ -152,7 +152,8 @@ createLocation(
   "start", // 0 newLocation
   [0,9,9], // 1 Coordinate
   "home", // 2 name
-  `\nYou're at the entrance to the ${brightYellow}PTSB January Cohort${reset}.\nYou see a ${brightGreen}magnetic stripe reader${reset}.`, // 3
+  // `\nYou're at the entrance to the ${brightYellow}PTSB January Cohort${reset}.\nYou see a ${brightGreen}magnetic stripe reader${reset}.`, // 3
+  `\nYou're at the entrance to the ${brightYellow}PTSB January Cohort${reset}.\nYou see a ${brightGreen}magnetic stripe reader${reset}.ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg`, // 
   "blocked",  // 4 North
   undefined,  // 5 East
   undefined,  // 6 South
@@ -178,6 +179,7 @@ createLocation(
   undefined, //9 down
   [], //10 item
   undefined, //11 lock
+  undefined // 12 funct
 );
 
 // Create topOfStairway
@@ -193,6 +195,8 @@ createLocation(
   undefined,//8 up
   "open",//9 down
   [],//10 item
+  undefined, //11 lock
+  undefined // 12 funct
 )
 
 // Create dungeon
@@ -208,6 +212,8 @@ createLocation(
   "open",//8 up
   undefined,//9 down
   [],//10 item
+  undefined, //11 lock
+  undefined // 12 funct
 )
 
 // Create Traproom
@@ -215,7 +221,7 @@ createLocation(
     "trapRoom", // 0 newLocation Variable
     [-1,9,11], // 1 name
     'trapRoom', //2 description
-    `\nIt's a ${yellow}trap!${reset}\n"The door ${green}closes and locks${reset} behind you!\nYou see a ${yellow}note${reset} that reads: Speak the magic word, and you may exit.`,
+    `\nIt's a ${yellow}trap!${reset}\n"The door ${green} has closed and locked${reset} behind you! It isn't budging. \nYou see a ${yellow}note${reset} that reads: Speak the magic word, and you may exit.`,
     "blocked", //4 north
     "blocked", //5 east
     "blocked", //6 south
@@ -223,6 +229,8 @@ createLocation(
     undefined, //8 up
     undefined, //9 down
     [], //10 item
+    undefined, //11 lock
+    undefined // 12 funct
 );
 
 // Create Kate's Office
@@ -238,6 +246,8 @@ createLocation(
   undefined,//8 up
   undefined,//9 down
   [],//10 item
+  undefined, //11 lock
+  undefined // 12 funct
 );
 
 // Create End of Hall
@@ -253,6 +263,8 @@ createLocation(
   undefined,//8 up
   undefined,//9 down
   [],//10 item
+  undefined, //11 lock
+  undefined // 12 funct
 )
 
 // Create Ben's Office
@@ -268,8 +280,11 @@ createLocation(
   undefined,//8 up
   undefined,//9 down
   ["tissue"],//10 item
+  undefined, //11 lock
+  undefined // 12 funct
 );
 
+//! ------------------------- Populate Current Location Array ----------------------------
 function popCL(){
   cL = []
     // if (cL.length == 0) {
@@ -545,11 +560,11 @@ async function dropYN (item) {
   let dropItemQuestion = await ask(`Are you sure you want to drop the ${yellow}${item}${reset}?\n`);
       if (dropItemQuestion == "y" || dropItemQuestion == "yes") {
 // If the answer is yes, push the item to the locationArray item array, and splice it from the inventory
-          let currentLocation = locationArray[i];
-          console.log("Current Location:",currentLocation)
-          currentLocation.item.push(item);
-          inventory.splice([inventory.indexOf(item)], 1)
-          start()
+        let currentLocation = locationArray[i];
+        console.log("Current Location:",currentLocation)
+        currentLocation.item.push(item);
+        inventory.splice([inventory.indexOf(item)], 1)
+        start()
       }
       else {
 // If the answer is no, go to the start again.        
@@ -619,7 +634,6 @@ async function go(text) {
     // popCL();
     // i = locationArray.indexOf(playerLocation)
     // console.log("locationarrays length before creating one on the fly",locationArray.length)
-    onTheFlyLocation()
     // console.log("locationarrays length after creating one on the fly",locationArray.length)
     // console.log("locationarrays after creating one on the fly",locationArray)
     // cLFunction()
@@ -673,8 +687,9 @@ console.log("locationArray[i].coordinate:",locationArray[i].coordinate)
       playerLocation = [z, x, y];
       // popCL();
       console.log(`You have ${green}warped${reset} to safety. ${yellow}Congratulations${reset}, ${blue}${nameInput}${reset}, on escaping!`);
-    }
-  };
+  }
+};
+  onTheFlyLocation()
   popCL();
   describe();
 }
@@ -710,6 +725,32 @@ function describe()
           itemList = items[0];
           itemList = (itemList.slice(0,-1)+`${reset}.`);
         }
+        // let description = (`You look around and see ${locationArray[i].description}.`)
+        let description = "";
+        
+          for (let i = 0; i < 361; i++) {
+            description += i
+          }
+            description = description.split(" ");
+            // console.log("fghjfgj",description)
+            let tempDesc = "";
+            let tempArray = [];
+              for (let index = 0; index < description.length; index++) {
+                // if (!description) {
+                //   console.log("description is missing")
+                // }
+                if (tempDesc.length + description[index].length < 80) {
+                // else if (tempDesc.length + description[i].length < 80) {
+                  tempDesc += description[index];
+                  console.log("tempdesclength",tempDesc.length)
+                } else {
+                  tempArray.push(tempDesc)
+                  tempArray.push("\n")
+                  tempDesc = "";}
+                }
+                console.log(tempArray)
+                console.log(tempArray.length)
+            // description =
         console.log(`You look around and see ${locationArray[i].description}.\nYou also see a ${yellow}${itemList}${reset}`);
           start();
 
