@@ -60,7 +60,7 @@ let y = 9;
 let playerLocation = [z, x, y];
 let cL = [];
 let i = 0;
-let inventory = ["key"];
+let inventory = ["keycard"];
 let locationArray = []; // This will store all constructed location objects
 
 // Intro Welcome Message
@@ -78,19 +78,32 @@ let commands = `\nTo ${brightGreen}move:${reset}, type ${brightYellow}go${reset}
 
 //!Search function for finding the playerLocation coordinates in the locationArray(object)
 function search() {
+  // console.log("searching...")
   // Search the locationArray coordinate until the coordinate of the playerLocation is found, then return the index
 
-  
-  for (let i; i < locationArray.length && JSON.stringify(locationArray[i].coordinate) != JSON.stringify(playerLocation); i++)
-  if ( i != undefined) {
-    console.log("defined i:",i)
-    return i;
-  } else { 
-    console.log("undefined i:",i)
-    return undefined
+  // console.log("locationarrayicoordinate & playerlocation",JSON.stringify(locationArray[i].coordinate), (JSON.stringify(playerLocation)))
+  for (i = 0; i < locationArray.length; i++) {
+  // for (let i = 0; i < locationArray.length; i++) {
+    if (JSON.stringify(locationArray[i].coordinate) != JSON.stringify(playerLocation)) {
+      // console.log("searching...");
+    } 
+    else if (JSON.stringify(locationArray[i].coordinate) == JSON.stringify(playerLocation)) {
+      console.log("found it. I =",i)
+      popCL()
+      return i;
+    }
+      else if (locationArray[i].coordinate == undefined) {
+        console.log(red,"undefined i coordinate:",i,reset)
+    //   console.log(green,"defined i coordinate:",i,reset)
+    //   return i;
+        onTheFlyLocation()
+    } else { 
+      console.log ("run outta options")
+      // console.log(red,"undefined i coordinate:",i,reset)
+      // return i = undefined;
+    }
   }
 }
-
 
 //!-------------------------------Location Class Constructor------------------------------
 class Location {
@@ -236,7 +249,7 @@ createLocation(
   undefined,//4 north
   "blocked",//5 east
   undefined,//6 south
-  "blocked",//7 west
+  undefined,//7 west
   undefined,//8 up
   undefined,//9 down
   [],//10 item
@@ -250,12 +263,31 @@ createLocation(
   `\nYou enter the office.\nYou see${green} Ben${reset} sitting at his computer leading a help session.\nHe offers you ${yellow}sympathy${reset}`,//3
   "blocked",//4 north
   "blocked",//5 east
-  undefined,//6 south
+  "blocked",//6 south
   undefined,//7 west
-  "open",//8 up
+  undefined,//8 up
   undefined,//9 down
   ["tissue"],//10 item
 );
+
+function popCL(){
+  cL = []
+    // if (cL.length == 0) {
+  // Check if there is location data at the index found
+    if (locationArray[i]) {
+      // If found, push directions at the current index to the cL array.
+      cL.push(locationArray[i].north);
+      cL.push(locationArray[i].east);
+      cL.push(locationArray[i].south);
+      cL.push(locationArray[i].west);
+      cL.push(locationArray[i].up);
+      cL.push(locationArray[i].down);
+      // }
+  } else {
+    console.log("gonna have to make something up in the popcl function")
+    // create a new location and populate the cl
+  }
+};
 
 begin();
 
@@ -439,10 +471,10 @@ If it does, add it to the inventory and remove it from the current location obje
   }
 
 // ------------------------------------ Open the door ------------------------------------
-  else if (locationArray[i].funct && input.includes("open")) {
+  else if (input.includes("open") && locationArray[i].funct) {
     locationArray[i].funct()
     start()}
-  else if (!locationArray[i].funct && input.includes("open")) {
+  else if (input.includes("open") && !locationArray[i].funct) {
     console.log(`There's nothing to ${brightYellow}open${reset} here!`)
     start()
   }
@@ -462,23 +494,6 @@ function onTheFlyLocation() {
   let newLocation = (`_${playerLocation}`)
   createLocation(newLocation, playerLocation, undefined, "nothing special about this area",undefined,undefined,undefined,undefined,undefined,undefined, [])
 }
-
-function popCL(){
-  if (cL.length == 0) {
-  // Check if there is location data at the index found
-    if (locationArray[i]) {
-      // If found, push directions at the current index to the cL array.
-      cL.push(locationArray[i].north);
-      cL.push(locationArray[i].east);
-      cL.push(locationArray[i].south);
-      cL.push(locationArray[i].west);
-      cL.push(locationArray[i].up);
-      cL.push(locationArray[i].down);
-      }
-  } else {
-    // create a new location and populate the cl
-  }
-};
 
 // -------------------------------- Take Items function: ---------------------------------
 async function take(itemToTake) {
@@ -569,78 +584,82 @@ async function go(text) {
     if (text == "north" || text == "forward") {
       if (cL[0] == 'blocked') {
         console.log(`\nThe way is ${red}blocked.${reset}\n`)
-        // playerLocation = locationArray[i].coordinate;
       } else {
+        // search();
       console.log(`You move ${text}`);
       y++
-      playerLocation = [z, x, y];   
-      popCL();
+      playerLocation = [z, x, y];
+        // search();
+
+        //! if i is undefined, create a location, and populate the current location array
+      // console.log("playerLocation after moving",playerLocation)
+      // popCL();
       // console.log(locationArray[i])
     }
   } else if (text == "east" || text == "right") {
     if (cL[1] == "blocked") {
-      console.log("The way is blocked.");
+      console.log(`The way is ${red}blocked${reset}.`);
       playerLocation = locationArray[i].coordinate;
     } else {
     console.log(`You move ${text}`);
     x++
     playerLocation = [z, x, y];
-    popCL();
-    i = locationArray.indexOf(playerLocation)
+    // popCL();
+    // i = locationArray.indexOf(playerLocation)
     }
 
   } else if (text == "south" || text == "backward") {
     if (cL[2] == "blocked") {
-      console.log("The way is blocked.");
+      console.log(`The way is ${red}blocked${reset}.`);
       playerLocation = locationArray[i].coordinate;
     } else {
     console.log(`You move ${text}`);
     y--
     playerLocation = [z, x, y];
-    popCL();
-    i = locationArray.indexOf(playerLocation)
+    // popCL();
+    // i = locationArray.indexOf(playerLocation)
     // console.log("locationarrays length before creating one on the fly",locationArray.length)
     onTheFlyLocation()
     // console.log("locationarrays length after creating one on the fly",locationArray.length)
     // console.log("locationarrays after creating one on the fly",locationArray)
-    cLFunction()
+    // cLFunction()
     }
 
   } else if (text == "west" || text == "left") {
     if (cL[3] == "blocked") {
-      console.log("The way is blocked.")
+      console.log(`The way is ${red}blocked${reset}.`)
       playerLocation = locationArray[i].coordinate;
     } else {
     console.log(`You move ${text}`);
     x--
     playerLocation = [z, x, y];
-    popCL();
-    i = locationArray.indexOf(playerLocation)
+    // popCL();
+    // i = locationArray.indexOf(playerLocation)
     }
 
   } else if (text == "up") {
     if (cL[4] != "open") {
-      console.log("You can't go up from here.")
+      console.log(`You ${red}can't go up${reset} from here.`)
       if(locationArray[i]) {playerLocation = locationArray[i].coordinate;}
     } else {
     console.log(`You move ${text}`);
     z++
     playerLocation = [z, x, y];
-    popCL();
-    i = locationArray.indexOf(playerLocation)
+    // popCL();
+    // i = locationArray.indexOf(playerLocation)
     }
 
   } else if (text == "down") {
     if (cL[5] != "open") {
-      console.log("You can't go down from here.")
+      console.log(`You ${red}can't go down${reset} from here.`)
       if (locationArray[i]) {playerLocation = locationArray[i].coordinate;}
     } else {
     console.log(`You move ${text}`);
     z--
     // console.log(z, x, y)
     playerLocation = [z, x, y];
-    popCL();
-    i = locationArray.indexOf(playerLocation)
+    // popCL();
+    // i = locationArray.indexOf(playerLocation)
     }
 
   } else if (text == "warp") {
@@ -652,17 +671,20 @@ console.log("locationArray[i].coordinate:",locationArray[i].coordinate)
     } else {
       [z, x, y] = [0, 9, 9];
       playerLocation = [z, x, y];
-      popCL();
+      // popCL();
       console.log(`You have ${green}warped${reset} to safety. ${yellow}Congratulations${reset}, ${blue}${nameInput}${reset}, on escaping!`);
     }
   };
-describe()
+  popCL();
+  describe();
 }
 
 // ----------------------------------- Looking around ------------------------------------
 function describe() 
 {
+  console.log("i before search",i)
   search()
+  console.log("i after search",i)
     // Search the locationArray for the existence of the current location at the search index
     // If there is no object at the index:
     if (!locationArray[i]){
